@@ -32,7 +32,7 @@ function UILibrary:CreateDraggableFrame(parent, position, size)
     end
 
     frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
@@ -46,7 +46,7 @@ function UILibrary:CreateDraggableFrame(parent, position, size)
     end)
 
     frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType.Touch then
             dragInput = input
         end
     end)
@@ -134,13 +134,12 @@ function UILibrary:CreateESP()
     return toggleESP
 end
 
--- Função para criar a função Lepanza
-function UILibrary:CreateLepanza()
+-- Função para criar o Aimbot
+function UILibrary:CreateAimbot()
     local Camera = workspace.CurrentCamera
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
-    local TweenService = game:GetService("TweenService")
     local LocalPlayer = Players.LocalPlayer
     local Holding = false
 
@@ -149,59 +148,19 @@ function UILibrary:CreateLepanza()
     _G.AimPart = "Head" -- Onde o script de aimbot travará.
     _G.Sensitivity = 0 -- Quantos segundos leva para o script de aimbot travar oficialmente na aimpart do alvo.
 
-    _G.CircleSides = 64 -- Quantos lados o círculo FOV terá.
-    _G.CircleColor = Color3.fromRGB(255, 255, 255) -- Cor (RGB) que o círculo FOV aparecerá.
-    _G.CircleTransparency = 0.7 -- Transparência do círculo.
-    _G.CircleRadius = 80 -- O raio do círculo / FOV.
-    _G.CircleFilled = false -- Determina se o círculo é preenchido ou não.
-    _G.CircleVisible = true -- Determina se o círculo é visível ou não.
-    _G.CircleThickness = 0 -- A espessura do círculo.
-
-    local FOVCircle = Drawing.new("Circle")
-    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    FOVCircle.Radius = _G.CircleRadius
-    FOVCircle.Filled = _G.CircleFilled
-    FOVCircle.Color = _G.CircleColor
-    FOVCircle.Visible = _G.CircleVisible
-    FOVCircle.Radius = _G.CircleRadius
-    FOVCircle.Transparency = _G.CircleTransparency
-    FOVCircle.NumSides = _G.CircleSides
-    FOVCircle.Thickness = _G.CircleThickness
-
     local function GetClosestPlayer()
-        local MaximumDistance = _G.CircleRadius
+        local MaximumDistance = math.huge
         local Target = nil
 
         for _, v in next, Players:GetPlayers() do
-            if v.Name ~= LocalPlayer.Name then
-                if _G.TeamCheck == true then
-                    if v.Team ~= LocalPlayer.Team then
-                        if v.Character ~= nil then
-                            if v.Character:FindFirstChild("HumanoidRootPart") ~= nil then
-                                if v.Character:FindFirstChild("Humanoid") ~= nil and v.Character:FindFirstChild("Humanoid").Health ~= 0 then
-                                    local ScreenPoint = Camera:WorldToScreenPoint(v.Character:WaitForChild("HumanoidRootPart", math.huge).Position)
-                                    local VectorDistance = (Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2.new(ScreenPoint.X, ScreenPoint.Y)).Magnitude
-                                    
-                                    if VectorDistance < MaximumDistance then
-                                        Target = v
-                                    end
-                                end
-                            end
-                        end
-                    end
-                else
-                    if v.Character ~= nil then
-                        if v.Character:FindFirstChild("HumanoidRootPart") ~= nil then
-                            if v.Character:FindFirstChild("Humanoid") ~= nil and v.Character:FindFirstChild("Humanoid").Health ~= 0 then
-                                local ScreenPoint = Camera:WorldToScreenPoint(v.Character:WaitForChild("HumanoidRootPart", math.huge).Position)
-                                local VectorDistance = (Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2.new(ScreenPoint.X, ScreenPoint.Y)).Magnitude
-                                
-                                if VectorDistance < MaximumDistance then
-                                    Target = v
-                                end
-                            end
-                        end
-                    end
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.AimPart) then
+                if _G.TeamCheck and v.Team == LocalPlayer.Team then
+                    continue
+                end
+                local Distance = (LocalPlayer.Character.Head.Position - v.Character.Head.Position).Magnitude
+                if Distance < MaximumDistance then
+                    MaximumDistance = Distance
+                    Target = v
                 end
             end
         end
@@ -209,40 +168,26 @@ function UILibrary:CreateLepanza()
         return Target
     end
 
-    UserInputService.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+    UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton2 then
             Holding = true
         end
     end)
 
-[_{{{CITATION{{{_1{](https://github.com/cjdjmj/aaa42/tree/43ef68a79bec18dc8f122bba912145517cfbb80f/README.md)[_{{{CITATION{{{_2{](https://github.com/RageFnAdmin/sgfgdggderg/tree/03b73b9c98fb51d48b5c4ef9e871f063c3a06d71/README.md)[_{{{CITATION{{{_3{](https://github.com/Green-bit1/aimbot/tree/7e786f9327cfb07db64f7d475f1046bde36adca8/README.md)[_{{{CITATION{{{_4{](https://github.com/gavinE312/hack/tree/88890a4a0f49cbf565616ac9ae46eeaf18a83b22/README.md)
-    UserInputService.InputEnded:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton2 then
             Holding = false
         end
     end)
 
     RunService.RenderStepped:Connect(function()
-        FOVCircle.Position = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
-        FOVCircle.Radius = _G.CircleRadius
-        FOVCircle.Filled = _G.CircleFilled
-        FOVCircle.Color = _G.CircleColor
-        FOVCircle.Visible = _G.CircleVisible
-        FOVCircle.Radius = _G.CircleRadius
-        FOVCircle.Transparency = _G.CircleTransparency
-        FOVCircle.NumSides = _G.CircleSides
-        FOVCircle.Thickness = _G.CircleThickness
-
-        if Holding == true and _G.AimbotEnabled == true then
-            local closestPlayer = GetClosestPlayer()
-            if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild(_G.AimPart) then
-                TweenService:Create(Camera, TweenInfo.new(_G.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(Camera.CFrame.Position, closestPlayer.Character[_G.AimPart].Position)}):Play()
+        if Holding and _G.AimbotEnabled then
+            local Target = GetClosestPlayer()
+            if Target and Target.Character and Target.Character:FindFirstChild(_G.AimPart) then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character[_G.AimPart].Position)
             end
         end
     end)
-end
-
-return toggleLepanza
 end
 
 -- Inicialização da biblioteca
@@ -251,14 +196,14 @@ local draggableFrame = UILibrary:CreateDraggableFrame(screenGui, UDim2.new(0.3, 
 
 local menuLabel = UILibrary:CreateLabel(draggableFrame, "Main Menu", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 50))
 local toggleESPFunction = UILibrary:CreateESP()
-local toggleLepanzaFunction = UILibrary:CreateLepanza()
+local toggleAimbotFunction = UILibrary:CreateAimbot()
 
 local toggleESPButton = UILibrary:CreateToggleButton(draggableFrame, "Toggle ESP", UDim2.new(0, 50, 0, 100), UDim2.new(0, 200, 0, 50), function(state)
     toggleESPFunction(state)
 end)
 
-local toggleLepanzaButton = UILibrary:CreateToggleButton(draggableFrame, "Toggle Lepanza", UDim2.new(0, 50, 0, 160), UDim2.new(0, 200, 0, 50), function(state)
-    toggleLepanzaFunction(state)
+local toggleAimbotButton = UILibrary:CreateToggleButton(draggableFrame, "Toggle Aimbot", UDim2.new(0, 50, 0, 160), UDim2.new(0, 200, 0, 50), function(state)
+    toggleAimbotFunction(state)
 end)
 
 -- Função para fechar a UI ao pressionar Control esquerdo
@@ -268,4 +213,71 @@ UIS.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftControl then
         draggableFrame.Visible = not draggableFrame.Visible
     end
+end)
+-- Função para criar o Teleport para Inimigos com Auto Kill
+function UILibrary:CreateTeleportAutoKill()
+    local teleportEnabled = false
+    local keyBind = Enum.KeyCode.P  -- Tecla para ativar o teleporte
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local UIS = game:GetService("UserInputService")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local teleportDistanceThreshold = 200  -- Distância máxima aumentada para teletransporte
+
+    local function toggleTeleport(enabled)
+        teleportEnabled = enabled
+        
+        local function teleportToEnemy()
+            while teleportEnabled do
+                local target = nil
+                for _, player in ipairs(Players:GetPlayers()) do
+                    local character = player.Character
+                    if player.Team ~= LocalPlayer.Team and character and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChild("Humanoid") and character.Humanoid.Health > 0 then
+                        local distance = (character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                        if distance <= teleportDistanceThreshold then
+                            target = player
+                            break
+                        end
+                    end
+                end
+                
+                while teleportEnabled and target and target.Character and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 do
+                    local humanoidRootPart = target.Character.HumanoidRootPart
+                    LocalPlayer.Character:SetPrimaryPartCFrame(humanoidRootPart.CFrame * CFrame.new(0, 5, 0))  -- Ficar em cima da cabeça do inimigo
+                    ReplicatedStorage.Events.Shoot:FireServer(target.Character)
+                    wait(0.1)
+                end
+
+                wait(0.5)
+            end
+        end
+        
+        if teleportEnabled then
+            spawn(teleportToEnemy)
+        end
+    end
+    
+    -- Conectar o evento de pressionar a tecla
+    UIS.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == keyBind then
+            teleportEnabled = true
+            toggleTeleport(true)
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == keyBind then
+            teleportEnabled = false
+            toggleTeleport(false)
+        end
+    end)
+    
+    return toggleTeleport
+end
+
+-- Adicione esta parte no local onde você cria os botões na interface
+local toggleTeleportAutoKillFunction = UILibrary:CreateTeleportAutoKill()
+
+local toggleTeleportAutoKillButton = UILibrary:CreateToggleButton(draggableFrame, "Ativar Auto Kill", UDim2.new(0, 50, 0, 220), UDim2.new(0, 200, 0, 50), function(state)
+    toggleTeleportAutoKillFunction(state)
 end)
