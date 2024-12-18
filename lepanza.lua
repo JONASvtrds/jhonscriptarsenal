@@ -1,3 +1,4 @@
+
 -- Biblioteca de UI simples para Roblox com menu lateral
 
 local UILibrary = {}
@@ -280,4 +281,222 @@ local toggleTeleportAutoKillFunction = UILibrary:CreateTeleportAutoKill()
 
 local toggleTeleportAutoKillButton = UILibrary:CreateToggleButton(draggableFrame, "Ativar Auto Kill", UDim2.new(0, 50, 0, 220), UDim2.new(0, 200, 0, 50), function(state)
     toggleTeleportAutoKillFunction(state)
+end)
+-- Função para ativar o Fly
+local function enableFly()
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+
+    local humanoidRootPart = character:FindFirstChildOfClass("HumanoidRootPart")
+    if humanoidRootPart then
+        humanoidRootPart.Anchored = false
+        humanoidRootPart.BrickColor = BrickColor.new("Bright red")
+    end
+end
+
+-- Função para desativar o Fly
+local function disableFly()
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+
+    local humanoidRootPart = character:FindFirstChildOfClass("HumanoidRootPart")
+    if humanoidRootPart then
+        humanoidRootPart.Anchored = true
+        humanoidRootPart.BrickColor = BrickColor.new("Bright blue")
+    end
+end
+
+-- Adicionar botão "Fly" ao UI
+local flyButton = UILibrary:CreateToggleButton(draggableFrame, "Fly", UDim2.new(0, 50, 0, 330), UDim2.new(0, 200, 0, 50), function(state)
+    if state then
+        enableFly()
+    else
+        disableFly()
+    end
+end)
+-- Função para criar o Aimbot com FOV e Team Check
+local function createAimbot()
+    local Camera = workspace.CurrentCamera
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService")
+    local LocalPlayer = Players.LocalPlayer
+    local Holding = false
+    local FOV = 50 -- Campo de visão padrão
+
+    _G.AimbotEnabled = true
+    _G.TeamCheck = true -- Se definido como verdadeiro, o script só travará sua mira em membros do time inimigo.
+    _G.AimPart = "Head" -- Onde o script de aimbot travará.
+    _G.Sensitivity = 0.1 -- Quantos segundos leva para o script de aimbot travar oficialmente na aimpart do alvo.
+
+    local function GetClosestPlayer()
+        local MaximumDistance = FOV
+        local Target = nil
+
+        for _, v in next, Players:GetPlayers() do
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(_G.AimPart) then
+                if _G.TeamCheck and v.Team == LocalPlayer.Team then
+                    continue
+                end
+                local Distance = (Camera.CFrame.Position - v.Character[_G.AimPart].Position).Magnitude
+                local ScreenPoint = Camera:WorldToScreenPoint(v.Character[_G.AimPart].Position)
+                local MousePosition = UserInputService:GetMouseLocation()
+                local DistanceFromMouse = (Vector2.new(ScreenPoint.X, ScreenPoint.Y) - MousePosition).Magnitude
+                if DistanceFromMouse < MaximumDistance then
+                    MaximumDistance = DistanceFromMouse
+                    Target = v
+                end
+            end
+        end
+
+        return Target
+    end
+
+    UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton2 then
+            Holding = true
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton2 then
+            Holding = false
+        end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if Holding and _G.AimbotEnabled then
+            local Target = GetClosestPlayer()
+            if Target and Target.Character and Target.Character:FindFirstChild(_G.AimPart) then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character[_G.AimPart].Position)
+            end
+        end
+    end)
+
+    -- Adicionar função para ajustar o FOV
+    local function createFOVInputFrame(parent)
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0, 200, 0, 100)
+        frame.Position = UDim2.new(0.5, -100, 0.5, -50)
+        frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        frame.Parent = parent
+
+        local textBox = Instance.new("TextBox")
+        textBox.Size = UDim2.new(1, -20, 0, 30)
+        textBox.Position = UDim2.new(0, 10, 0, 10)
+        textBox.PlaceholderText = "Digite o FOV"
+        textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+        textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        textBox.Parent = frame
+
+        local submitButton = Instance.new("TextButton")
+        submitButton.Size = UDim2.new(1, -20, 0, 30)
+        submitButton.Position = UDim2.new(0, 10, 0, 50)
+        submitButton.Text = "Aplicar"
+        submitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        submitButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        submitButton.Parent = frame
+
+        submitButton.MouseButton1Click:Connect(function()
+            local newFOV = tonumber(textBox.Text)
+            if newFOV then
+                FOV = newFOV
+            end
+            frame:Destroy() -- Fechar a UI após aplicar o FOV
+        end)
+    end
+
+    -- Adicionar botão "Ajustar FOV" ao UI
+    local changeFOVButton = UILibrary:CreateToggleButton(draggableFrame, "Ajustar FOV", UDim2.new(0, 50, 0, 390), UDim2.new(0, 200, 0, 50), function(state)
+        if state then
+            createFOVInputFrame(draggableFrame)
+        end
+    end)
+end
+
+-- Inicialização do Aimbot
+createAimbot()
+-- Função para adicionar a funcionalidade de scroll
+local function createScrollableFrame(parent, position, size)
+    local scrollingFrame = Instance.new("ScrollingFrame")
+    scrollingFrame.Position = UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset)
+    scrollingFrame.Size = UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset)
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 2, 0) -- Ajuste conforme necessário
+    scrollingFrame.ScrollBarThickness = 8
+    scrollingFrame.Parent = parent
+
+    return scrollingFrame
+end
+
+-- Inicialização do Scroll no Menu Lateral
+local scrollableFrame = createScrollableFrame(draggableFrame, UDim2.new(0, 0, 0, 50), UDim2.new(1, 0, 1, -50))
+
+-- Exemplo de uso: adicionando elementos ao frame rolável
+local exampleLabel = UILibrary:CreateLabel(scrollableFrame, "Exemplo de Texto Rolável", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 50))
+
+-- Adicionar mais botões e funcionalidades ao `scrollableFrame` conforme necessário
+local toggleESPButton = UILibrary:CreateToggleButton(scrollableFrame, "Toggle ESP", UDim2.new(0, 50, 0, 100), UDim2.new(0, 200, 0, 50), function(state)
+    toggleESPFunction(state)
+end)
+
+local toggleAimbotButton = UILibrary:CreateToggleButton(scrollableFrame, "Toggle Aimbot", UDim2.new(0, 50, 0, 160), UDim2.new(0, 200, 0, 50), function(state)
+    toggleAimbotFunction(state)
+end)
+-- Função para adicionar a funcionalidade de scroll
+local function createScrollableFrame(parent, position, size)
+    local scrollingFrame = Instance.new("ScrollingFrame")
+    scrollingFrame.Position = UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset)
+    scrollingFrame.Size = UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset)
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 2, 0) -- Ajuste conforme necessário
+    scrollingFrame.ScrollBarThickness = 8
+    scrollingFrame.Parent = parent
+
+    return scrollingFrame
+end
+
+-- Inicialização do Scroll no Menu Lateral
+local scrollableFrame = createScrollableFrame(draggableFrame, UDim2.new(0, 0, 0, 50), UDim2.new(1, 0, 1, -50))
+
+-- Exemplo de uso: adicionando elementos ao frame rolável
+local exampleLabel = UILibrary:CreateLabel(scrollableFrame, "Exemplo de Texto Rolável", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 50))
+
+-- Adicionar os botões ao frame rolável
+local toggleESPButton = UILibrary:CreateToggleButton(scrollableFrame, "Toggle ESP", UDim2.new(0, 50, 0, 60), UDim2.new(0, 200, 0, 50), function(state)
+    toggleESPFunction(state)
+end)
+
+local toggleAimbotButton = UILibrary:CreateToggleButton(scrollableFrame, "Toggle Aimbot", UDim2.new(0, 50, 0, 120), UDim2.new(0, 200, 0, 50), function(state)
+    toggleAimbotFunction(state)
+end)
+
+local flyButton = UILibrary:CreateToggleButton(scrollableFrame, "Fly", UDim2.new(0, 50, 0, 180), UDim2.new(0, 200, 0, 50), function(state)
+    if state then
+        enableFly()
+    else
+        disableFly()
+    end
+end)
+
+local changeFOVButton = UILibrary:CreateToggleButton(scrollableFrame, "Ajustar FOV", UDim2.new(0, 50, 0, 240), UDim2.new(0, 200, 0, 50), function(state)
+    if state then
+        createFOVInputFrame(scrollableFrame)
+    end
+end)
+-- Função para ativar o Infinite Jump
+local function enableInfiniteJump()
+    local UserInputService = game:GetService("UserInputService")
+    
+    UserInputService.JumpRequest:Connect(function()
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+            player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+end
+
+-- Adicionar botão "Infinite Jump" ao UI
+local infiniteJumpButton = UILibrary:CreateToggleButton(scrollableFrame, "Infinite Jump", UDim2.new(0, 50, 0, 300), UDim2.new(0, 200, 0, 50), function(state)
+    if state then
+        enableInfiniteJump()
+    end
 end)
